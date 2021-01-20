@@ -30,3 +30,5 @@ Attention, il faut avoir GraphDB ouvert avec le fichier skiOntologieP3.ttl impor
 ```bash
 npm start
 ```
+
+Et voilà, les queries ont été exécutées jusqu'à ce que plus rien de nouveau ne puisse être inféré.
