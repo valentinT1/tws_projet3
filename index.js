@@ -70,61 +70,94 @@ const routeBelongsRestaurant = prefix +
         "}";
 const resAllTrackName = [];
 vari = '';
-
-async function getAllTrackName() {
-    await graphdb.Query.query(allTrackName, (err, data) => {
+console.log('hihihihihihihihi');
+async function insertDifficulty1() {
+    await graphdb.Query.query(difficulty1, (err, data) => {
                 const i = JSON.parse(data);
+                console.log(i);
+                console.log(err);
 
-                i.results.bindings.forEach((name, a) => {
-                    vari = i.results.bindings[a].trk.value;
-                    resAllTrackName.push(vari);
+                // i.results.bindings.forEach((name, a) => {
+                //     vari = i.results.bindings[a].trk.value;
+                //     resAllTrackName.push(vari);
+
 
                 });
             });
+            console.log(i);
 };
 
-getAllTrackName().then();
+insertDifficulty1().then();
 
-// query pour récuperer tous les pois par track
-var resAllPOIsByTrack = [];
-var tracksInfoArray = [];
-var vara ='';
-var tempo ='';
+async function insertDifficulty2() {
+    await graphdb.Query.query(difficulty2, (err, data) => {
+                // const i = JSON.parse(data);
+                console.log(data);
+                console.log(err);
 
-async function getAllPOIsByTrack(trackname) {
-    resAllPOIsByTrack = [];
-    vara ='';
-    tempo ='';
-
-    var allPOIsByTrack = prefix +
-        "select ?namepoi where {" +
-    	"?s a cui:trk." +
-        "?s cui:name \"" + trackname + "\"." +
-        "?poi a cui:POI." +
-        "?t a cui:trkpt." +
-        "?t cui:hasClosePOI ?poi." +
-        "?s cui:trackpoints ?t." +
-        "?poi cui:lat ?lat." +
-        "?poi cui:lon ?lon." +
-        "?poi cui:name ?namepoi" +
-        "}";
-
-    await graphdb.Query.query(allPOIsByTrack, (err, data) => {
-        var obj = JSON.parse(data)
-
-        obj.results.bindings.forEach((name, a) => {
-           vara = obj.results.bindings[a].namepoi.value;
-           resAllPOIsByTrack.push(vara);
-        });
-
-        tracksInfoArray.push([trackname, resAllPOIsByTrack]);
-        resAllPOIsByTrack = [];
-    });
+                // i.results.bindings.forEach((name, a) => {
+                //     vari = i.results.bindings[a].trk.value;
+                //     resAllTrackName.push(vari);
+                //
+                // });
+            });
 };
+insertDifficulty2().then();
 
-//attend pour être sur d'avoir les résultats
-setTimeout(function(){
-    resAllTrackName.forEach(trackname => {
-        getAllPOIsByTrack(trackname).then();
-    });
-}, 2000);
+async function insertDifficulty3() {
+    await graphdb.Query.query(difficulty3, (err, data) => {
+                // const i = JSON.parse(data);
+                console.log(data);
+                console.log(err);
+
+                // i.results.bindings.forEach((name, a) => {
+                //     vari = i.results.bindings[a].trk.value;
+                //     resAllTrackName.push(vari);
+                //
+                // });
+            });
+};
+insertDifficulty3().then();
+// // query pour récuperer tous les pois par track
+// var resAllPOIsByTrack = [];
+// var tracksInfoArray = [];
+// var vara ='';
+// var tempo ='';
+//
+// async function getAllPOIsByTrack(trackname) {
+//     resAllPOIsByTrack = [];
+//     vara ='';
+//     tempo ='';
+//
+//     var allPOIsByTrack = prefix +
+//         "select ?namepoi where {" +
+//     	"?s a cui:trk." +
+//         "?s cui:name \"" + trackname + "\"." +
+//         "?poi a cui:POI." +
+//         "?t a cui:trkpt." +
+//         "?t cui:hasClosePOI ?poi." +
+//         "?s cui:trackpoints ?t." +
+//         "?poi cui:lat ?lat." +
+//         "?poi cui:lon ?lon." +
+//         "?poi cui:name ?namepoi" +
+//         "}";
+//
+//     await graphdb.Query.query(allPOIsByTrack, (err, data) => {
+//         var obj = JSON.parse(data)
+//
+//         obj.results.bindings.forEach((name, a) => {
+//            vara = obj.results.bindings[a].namepoi.value;
+//            resAllPOIsByTrack.push(vara);
+//         });
+//
+//         tracksInfoArray.push([trackname, resAllPOIsByTrack]);
+//         resAllPOIsByTrack = [];
+//     });
+// };
+//
+// //attend pour être sur d'avoir les résultats
+// setTimeout(function(){
+//     resAllTrackName.forEach(trackname => {
+//         getAllPOIsByTrack(trackname).then();
+//     });
+// }, 2000);
