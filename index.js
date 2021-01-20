@@ -1,163 +1,245 @@
-const fs = require('fs');
-
-//connection a graphdb -> serveur
-const GraphDB = require('graphdb-js');
-
-let graphdb = new GraphDB({
-    hostname: "localhost",
-    repository: "ski"
+const SparqlClient = require('sparql-http-client')
+const client = new SparqlClient({
+    endpointUrl: 'http://localhost:7200/repositories/ski',
+    updateUrl: 'http://localhost:7200/repositories/ski/statements'
 });
 
+const prefix = "prefix ex: <http://www.semanticweb.org/tws/tp2#>\n" +
+    "prefix owl: <http://www.w3.org/2002/07/owl#>\n" +
+    "prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+    "prefix xml: <http://www.w3.org/XML/1998/namespace>\n" +
+    "prefix xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+    "prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
 
-/**
- * Query a GraphDB
- *
+/*
+* Begin Infer Duration
+ */
+inferDurationRecursive()
+
+function inferDurationRecursive() {
+    getRouteDurationCount().then(count => {
+        let previousCount = count;
+        inferDuration().then(() => {
+            getRouteDurationCount().then(count => {
+                if (count > previousCount) {
+                    inferDurationRecursive()
+                } else {
+                    console.log("Done inferDuration")
+                }
+            })
+        });
+    });
+
+    async function inferDuration() {
+        const inferDurationQuery = prefix + "insert {?x ex:duration ?tt.}\n" +
+            "where {\n" +
+            "    ?x a ex:Route. ?x ex:hasFirstElement ?fx. ?x ex:hasRest ?rx. ?fx ex:duration ?dfx. ?rx ex:duration ?drx\n" +
+            "    bind(?dfx + ?drx AS ?tt)\n" +
+            "}"
+        return await client.query.update(inferDurationQuery);
+    }
+
+    async function getRouteDurationCount() {
+        const routeDurationQuery = prefix + "select (COUNT(?o) AS ?rowCount)\n" +
+            "where { \n" +
+            "    ?s a ex:Route.\n" +
+            "    ?s ex:duration ?o .\n" +
+            "} ";
+        let stream = await client.query.select(routeDurationQuery);
+        let rowCount = 0;
+        stream.on('data', result => {
+            rowCount = result.rowCount.value;
+        })
+
+        let promise = new Promise((resolve, reject) => {
+            stream.on('finish', () => {
+                resolve(rowCount)
+            })
+        });
+        return await promise;
+    }
+}
+
+/*
+* End Infer Duration
  */
 
-const prefix = "prefix ex: <http://www.semanticweb.org/tws/tp2#> \n" +
-                "prefix owl: <http://www.w3.org/2002/07/owl#> \n" +
-                "prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" +
-                "prefix xml: <http://www.w3.org/XML/1998/namespace> \n" +
-                "prefix xsd: <http://www.w3.org/2001/XMLSchema#> \n" +
-                "prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> \n"
+/*
+* Begin Infer Difficulty
+ */
+inferDifficultyRecursive()
 
+function inferDifficultyRecursive() {
+    getRouteDifficultyCount().then(count => {
+        let previousCount = count;
+        inferDifficulty().then(() => {
+            getRouteDifficultyCount().then(count => {
+                if (count > previousCount) {
+                    inferDifficultyRecursive()
+                } else {
+                    console.log("Done inferDifficulty")
+                }
+            })
+        });
+    });
 
-// query pour récupérer tous les trackname
+    async function inferDifficulty() {
+        const inferDifficultyQuery = prefix + "insert  {?x ex:difficulty ?dx.}\n" +
+            "where {\n" +
+            "    ?x a ex:Route.\n" +
+            "    ?x ex:hasFirstElement ?fx.\n" +
+            "    ?x ex:hasRest ?rx.\n" +
+            "    ?fx ex:difficulty ?dfx.\n" +
+            "    ?rx ex:difficulty ?drx.\n" +
+            "    bind(if(?dfx >= ?drx, ?dfx, ?drx) as ?dx)\n" +
+            "}"
+        return await client.query.update(inferDifficultyQuery);
+    }
 
-const difficulty1 = prefix +
-        "INSERT {?r ex:difficulty 1 .} " +
-        "WHERE{?r a ex:BlueRun .}";
-const difficulty2 = prefix +
-        "INSERT {?r ex:difficulty 2 .} " +
-        "WHERE{?r a ex:RedRun .}";
-const difficulty3 = prefix +
-        "INSERT {?r ex:difficulty 3 .} " +
-        "WHERE{?r a ex:BlackRun .}";
-const difficulty0 = prefix +
-        "INSERT {?r ex:difficulty 0 .} " +
-        "WHERE{?r a ex:SkiLift .}";
-const routeDuration = prefix +
-        "insert {?x ex:duration ?tt.} " +
-        "where {"+
-        "?x a ex:Route. ?x ex:hasFirstElement ?fx. ?x ex:hasRest ?rx. ?fx ex:duration ?dfx. ?rx ex:duration ?drx " +
-        "bind(?dfx + ?drx AS ?tt)" +
-        "}";
-const routeDifficulty = prefix +
-        "insert {?x ex:difficulty ?dx.} " +
-        "where {" +
-        "?x a ex:Route. ?x ex:hasFirstElement ?fx. ?x ex:hasRest ?rx. ?fx ex:difficulty ?dfx. ?rx ex:difficulty ?drx " +
-        "bind(if(?dfx >= ?drx, ?dfx, ?drx) as ?dx)" +
-        "}";
-const routeBelongsFirst = prefix +
-        "insert {?fx ex:belongsTo ?x.} " +
-        "where {" +
-        "?x a ex:Route. ?x ex:hasFirstElement ?fx." +
-        "}";
-const routeBelongsRest = prefix +
-        "insert {?brx ex:belongsTo ?x.} " +
-        "where {" +
-        "?x a ex:Route. ?x ex:hasRest ?rx. ?brx ex:belongsTo ?rx." +
-        "}";
-const routeBelongsPlace = prefix +
-        "insert {?p ex:belongsTo ?x.} " +
-        "where {" +
-        "?p a ex:Place. ?p (ex:isStartOf | ex:isEndOf) ?s. ?s ex:belongsTo ?x." +
-        "}";
-const routeBelongsRestaurant = prefix +
-        "insert {?r ex:belongsTo ?x.} " +
-        "where {" +
-        "?r a ex:Restaurant. ?r ex:locatedAt ?p. ?p ex:belongsTo ?x." +
-        "}";
-const resAllTrackName = [];
-vari = '';
-console.log('hihihihihihihihi');
-async function insertDifficulty1() {
-    await graphdb.Query.query(difficulty1, (err, data) => {
-                const i = JSON.parse(data);
-                console.log(i);
-                console.log(err);
+    async function getRouteDifficultyCount() {
+        const routeDifficultyQuery = prefix + "select (COUNT(?o) AS ?rowCount)\n" +
+            "where { \n" +
+            "    ?s a ex:Route.\n" +
+            "    ?s ex:difficulty ?o .\n" +
+            "} ";
+        let stream = await client.query.select(routeDifficultyQuery);
+        let rowCount = 0;
+        stream.on('data', result => {
+            rowCount = result.rowCount.value;
+        })
 
-                // i.results.bindings.forEach((name, a) => {
-                //     vari = i.results.bindings[a].trk.value;
-                //     resAllTrackName.push(vari);
+        let promise = new Promise((resolve, reject) => {
+            stream.on('finish', () => {
+                resolve(rowCount)
+            })
+        });
+        return await promise;
+    }
+}
 
+/*
+* End Infer Difficulty
+ */
 
-                });
-            });
-            console.log(i);
-};
+/*
+* Begin Infer Belongs To
+ */
+inferBelongsTo().then(() => {
+    console.log("Done inferBelongsTo")
+})
 
-insertDifficulty1().then();
+async function inferBelongsTo() {
+    return new Promise((resolve, reject) => {
+        inferBelongsToFirst().then(() => {
+            recBelongsTo()
 
-async function insertDifficulty2() {
-    await graphdb.Query.query(difficulty2, (err, data) => {
-                // const i = JSON.parse(data);
-                console.log(data);
-                console.log(err);
+            function recBelongsTo() {
+                getBelongsToRestCount().then(count => {
+                    let previousCount = count;
+                    inferBelongsToRest().then(() => {
+                        getBelongsToRestCount().then(count => {
+                            if (count > previousCount) {
+                                recBelongsTo()
+                            } else {
+                                resolve()
+                            }
+                        })
+                    });
+                })
+            }
+        })
+    });
 
-                // i.results.bindings.forEach((name, a) => {
-                //     vari = i.results.bindings[a].trk.value;
-                //     resAllTrackName.push(vari);
-                //
-                // });
-            });
-};
-insertDifficulty2().then();
+    async function inferBelongsToRest() {
+        const inferBelongsToRestQuery = prefix + "insert {?brx ex:belongsTo ?x.}\n" +
+            "where {\n" +
+            "    ?x a ex:Route. ?x ex:hasRest ?rx. ?brx ex:belongsTo ?rx.\n" +
+            "}"
+        return await client.query.update(inferBelongsToRestQuery);
+    }
 
-async function insertDifficulty3() {
-    await graphdb.Query.query(difficulty3, (err, data) => {
-                // const i = JSON.parse(data);
-                console.log(data);
-                console.log(err);
+    async function inferBelongsToFirst() {
+        const inferBelongsToFirstQuery = prefix + "insert {?fx ex:belongsTo ?x.}\n" +
+            "where {\n" +
+            "    ?x a ex:Route. ?x ex:hasFirstElement ?fx.\n" +
+            "}"
+        return await client.query.update(inferBelongsToFirstQuery);
+    }
 
-                // i.results.bindings.forEach((name, a) => {
-                //     vari = i.results.bindings[a].trk.value;
-                //     resAllTrackName.push(vari);
-                //
-                // });
-            });
-};
-insertDifficulty3().then();
-// // query pour récuperer tous les pois par track
-// var resAllPOIsByTrack = [];
-// var tracksInfoArray = [];
-// var vara ='';
-// var tempo ='';
-//
-// async function getAllPOIsByTrack(trackname) {
-//     resAllPOIsByTrack = [];
-//     vara ='';
-//     tempo ='';
-//
-//     var allPOIsByTrack = prefix +
-//         "select ?namepoi where {" +
-//     	"?s a cui:trk." +
-//         "?s cui:name \"" + trackname + "\"." +
-//         "?poi a cui:POI." +
-//         "?t a cui:trkpt." +
-//         "?t cui:hasClosePOI ?poi." +
-//         "?s cui:trackpoints ?t." +
-//         "?poi cui:lat ?lat." +
-//         "?poi cui:lon ?lon." +
-//         "?poi cui:name ?namepoi" +
-//         "}";
-//
-//     await graphdb.Query.query(allPOIsByTrack, (err, data) => {
-//         var obj = JSON.parse(data)
-//
-//         obj.results.bindings.forEach((name, a) => {
-//            vara = obj.results.bindings[a].namepoi.value;
-//            resAllPOIsByTrack.push(vara);
-//         });
-//
-//         tracksInfoArray.push([trackname, resAllPOIsByTrack]);
-//         resAllPOIsByTrack = [];
-//     });
-// };
-//
-// //attend pour être sur d'avoir les résultats
-// setTimeout(function(){
-//     resAllTrackName.forEach(trackname => {
-//         getAllPOIsByTrack(trackname).then();
-//     });
-// }, 2000);
+    async function getBelongsToRestCount() {
+        const belongsToRestQuery = prefix + "select (COUNT(?belonger) AS ?rowCount)\n" +
+            "where { \n" +
+            "    ?belonger ex:belongsTo ?route.\n" +
+            "} ";
+        let stream = await client.query.select(belongsToRestQuery);
+        let rowCount = 0;
+        stream.on('data', result => {
+            rowCount = result.rowCount.value;
+        })
+
+        let promise = new Promise((resolve, reject) => {
+            stream.on('finish', () => {
+                resolve(rowCount)
+            })
+        });
+        return await promise;
+    }
+}
+
+/*
+* End Infer Belongs To
+ */
+
+/*
+* Begin Infer Belongs To Place
+ */
+inferBelongsToPlace().then(() => {
+    console.log("Done inferBelongsToPlace")
+})
+
+async function inferBelongsToPlace() {
+    return new Promise((resolve, reject) => {
+        inferBelongsTo().then(() => {
+            inferBelongsToPlaceRequest().then(() => {
+                resolve()
+            })
+        });
+    });
+
+    async function inferBelongsToPlaceRequest() {
+        const inferBelongsToPlaceQuery = prefix + "insert {?p ex:belongsTo ?x.}\n" +
+            "where {\n" +
+            "    ?p a ex:Place. ?p (ex:isStartOf | ex:isEndOf) ?s. ?s ex:belongsTo ?x.\n" +
+            "}"
+        return await client.query.update(inferBelongsToPlaceQuery);
+    }
+}
+
+/*
+* End Infer Belongs To Place
+ */
+
+/*
+* Begin Infer Belongs To Restaurant
+ */
+inferBelongsToRestaurant()
+
+function inferBelongsToRestaurant() {
+    inferBelongsToPlace().then(() => {
+        insertBelongsToRestaurant().then(() => {
+            console.log("Done inferBelongsToRestaurant")
+        })
+    });
+
+    async function insertBelongsToRestaurant() {
+        const inferBelongsToRestaurantQuery = prefix + "insert {?r ex:belongsTo ?x.}\n" +
+            "where {\n" +
+            "    ?r a ex:Restaurant. ?r ex:locatedAt ?p. ?p ex:belongsTo ?x.\n" +
+            "}"
+        return await client.query.update(inferBelongsToRestaurantQuery);
+    }
+
+}
+/*
+* End Infer Belongs To Restaurant
+ */
