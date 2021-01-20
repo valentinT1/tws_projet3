@@ -4,7 +4,8 @@
   "description": "tws projet3",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "nodemon index.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,11 @@
   "bugs": {
     "url": "https://github.com/valentinT1/tws_projet3/issues"
   },
-  "homepage": "https://github.com/valentinT1/tws_projet3#readme"
+  "homepage": "https://github.com/valentinT1/tws_projet3#readme",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "graphdb-js": "^1.0.2",
+    "nodemon": "^2.0.7",
+    "sparqling-star": "^1.1.0"
+  }
 }
