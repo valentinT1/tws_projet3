@@ -22,3 +22,11 @@ git clone https://github.com/valentinT1/tws_projet3
 ```bash
 npm install
 ```
+
+### 3 - Exécuter le projet
+
+Attention, il faut avoir GraphDB ouvert avec le fichier skiOntologieP3.ttl importé. La repository GraphDB doit s'appeler "ski".
+
+```bash
+npm start
+```
