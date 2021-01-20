@@ -5,7 +5,7 @@ Ceci est le code du projet 1 de TWS. Il a pour but de créer un guide du tourism
 ## Ressources
 
 * BDD : GraphDB
-* Serveur : Nodejs
+* Script : javascript
 
 ## Installation
 
