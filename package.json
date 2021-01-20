@@ -1,0 +1,19 @@
+{
+  "name": "tws_ski2",
+  "version": "1.0.0",
+  "description": "tws projet3",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/valentinT1/tws_projet3.git"
+  },
+  "author": "Laetitia Doerks et Valentin Tamone",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/valentinT1/tws_projet3/issues"
+  },
+  "homepage": "https://github.com/valentinT1/tws_projet3#readme"
+}
