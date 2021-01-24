@@ -14,38 +14,38 @@ const prefix = "prefix ex: <http://www.semanticweb.org/tws/tp2#>\n" +
 /*
 * Mise en place de la propriété difficulty
 */
-async function setupDifficulty() {
-     const diffcultyBlueRunQuery = prefix +
+async function setDifficulty() {
+     const diffBlueRunQuery = prefix +
         "INSERT {?r ex:difficulty 1 .}\n" +
         "WHERE{?r a ex:BlueRun .}"
-     await client.query.update(diffcultyBlueRunQuery)
-     const diffcultyRedRunQuery = prefix +
+     await client.query.update(diffBlueRunQuery)
+     const diffRedRunQuery = prefix +
         "INSERT {?r ex:difficulty 2 .}\n" +
         "WHERE{?r a ex:RedRun .}"
-     await client.query.update(diffcultyRedRunQuery)
-     const diffcultyBlackRunQuery = prefix +
+     await client.query.update(diffRedRunQuery)
+     const diffBlackRunQuery = prefix +
         "INSERT {?r ex:difficulty 3 .}\n" +
         "WHERE{?r a ex:BlackRun .}"
-     await client.query.update(diffcultyBlackRunQuery)
-     const diffcultyLiftQuery = prefix +
+     await client.query.update(diffBlackRunQuery)
+     const diffSkiLiftQuery = prefix +
         "INSERT {?r ex:difficulty 0 .}\n" +
         "WHERE{?r a ex:SkiLift .}"
-     await client.query.update(diffcultyLiftQuery)
+     await client.query.update(diffSkiLiftQuery)
  }
 
 /*
 * Fonction pour la duree d'un chemin
  */
 // fonction pour l'ajout de la duree sur tout les troncons d'un chemin récursivement
-function inferDurationRecursive() {
-    getRouteDurationCount().then(count => {
-        let previousCount = count;
+function inferDurationLoop() {
+    getRouteDurationNumber().then(number => {
+        let previousNumber = number;
         inferDuration().then(() => {
-            getRouteDurationCount().then(count => {
-                if (count > previousCount) {
-                    inferDurationRecursive()
+            getRouteDurationNumber().then(number => {
+                if (number > previousNumber) {
+                    inferDurationLoop()
                 } else {
-                    console.log("Done inferDuration")
+                    console.log("infering duration OK !")
                 }
             })
         });
@@ -61,7 +61,7 @@ function inferDurationRecursive() {
         return await client.query.update(inferDurationQuery);
     }
     //fonction pour le nombre de boucle pour la durée
-    async function getRouteDurationCount() {
+    async function getRouteDurationNumber() {
         const routeDurationQuery = prefix +
             "select (COUNT(?o) AS ?rowCount)\n" +
             "where { \n" +
@@ -87,15 +87,15 @@ function inferDurationRecursive() {
 * Fonction pour la difficulé
  */
 //fonction pour ajouter la difficulté d'un chemin recursivement
-function inferDifficultyRecursive() {
-    getRouteDifficultyCount().then(count => {
-        let previousCount = count;
+function inferDifficultyLoop() {
+    getRouteDifficultyNumber().then(number => {
+        let previousNumber = number;
         inferDifficulty().then(() => {
-            getRouteDifficultyCount().then(count => {
-                if (count > previousCount) {
-                    inferDifficultyRecursive()
+            getRouteDifficultyNumber().then(number => {
+                if (number > previousNumber) {
+                    inferDifficultyLoop()
                 } else {
-                    console.log("Done inferDifficulty")
+                    console.log("infering difficulty OK !")
                 }
             })
         });
@@ -115,7 +115,7 @@ function inferDifficultyRecursive() {
         return await client.query.update(inferDifficultyQuery);
     }
     //fonction pour le nombre de boucle pour la durée
-    async function getRouteDifficultyCount() {
+    async function getRouteDifficultyNumber() {
         const routeDifficultyQuery = prefix +
             "select (COUNT(?o) AS ?rowCount)\n" +
             "where { \n" +
@@ -147,11 +147,11 @@ async function inferBelongsTo() {
             recBelongsTo()
 
             function recBelongsTo() {
-                getBelongsToRestCount().then(count => {
-                    let previousCount = count;
+                getBelongsToRestNumber().then(number => {
+                    let previousNumber = number;
                     inferBelongsToRest().then(() => {
-                        getBelongsToRestCount().then(count => {
-                            if (count > previousCount) {
+                        getBelongsToRestNumber().then(number => {
+                            if (number > previousNumber) {
                                 recBelongsTo()
                             } else {
                                 resolve()
@@ -181,7 +181,7 @@ async function inferBelongsTo() {
         return await client.query.update(inferBelongsToFirstQuery);
     }
 
-    async function getBelongsToRestCount() {
+    async function getBelongsToRestNumber() {
         const belongsToRestQuery = prefix +
             "select (COUNT(?belonger) AS ?rowCount)\n" +
             "where { \n" +
@@ -230,7 +230,7 @@ async function inferBelongsToPlace() {
 function inferBelongsToRestaurant() {
     inferBelongsToPlace().then(() => {
         insertBelongsToRestaurant().then(() => {
-            console.log("Done inferBelongsToRestaurant")
+            console.log("infering restaurants OK !")
         })
     });
 
@@ -249,14 +249,14 @@ function inferBelongsToRestaurant() {
  * Execution des fonctions dans l'ordre
  */
 
- setupDifficulty().then(() => {
-     inferDurationRecursive()
-     inferDifficultyRecursive()
+ setDifficulty().then(() => {
+     inferDurationLoop()
+     inferDifficultyLoop()
      inferBelongsTo().then(() => {
-         console.log("Done inferBelongsTo")
+         console.log("infering belonging Ski Lifts and Runs OK !")
      })
      inferBelongsToPlace().then(() => {
-         console.log("Done inferBelongsToPlace")
+         console.log("infering places OK !")
      })
      inferBelongsToRestaurant()
  })
